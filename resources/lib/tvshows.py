@@ -128,6 +128,18 @@ class Tvshows(object):
                     0, self.options["limit"]))
             return self.metadatautils.process_method_on_list(self.process_tvshow, tvshows)
 
+    # def recent(self):
+    #     ''' get recently added tvshows '''
+    #     filters = []
+    #     if self.options["hide_watched"]:
+    #         filters.append(kodi_constants.FILTER_UNWATCHED)
+    #     if self.options.get("tag"):
+    #         filters.append({"operator": "contains", "field": "tag", "value": self.options["tag"]})
+    #     tvshows = self.metadatautils.kodidb.tvshows(
+    #         sort=kodi_constants.SORT_DATEADDED, filters=filters, limits=(
+    #             0, self.options["limit"]))
+    #     return self.metadatautils.process_method_on_list(self.process_tvshow, tvshows)
+
     def recent(self):
         ''' get recently added tvshows '''
         filters = []
@@ -137,7 +149,20 @@ class Tvshows(object):
             filters.append({"operator": "contains", "field": "tag", "value": self.options["tag"]})
         tvshows = self.metadatautils.kodidb.tvshows(
             sort=kodi_constants.SORT_DATEADDED, filters=filters, limits=(
-                0, self.options["limit"]))
+                    0, self.options["limit"]))
+        tvshows_lastplayed = self.metadatautils.kodidb.tvshows(
+            sort=kodi_constants.SORT_LASTPLAYED, filters=filters, limits=(
+                    0, self.options["limit"]))
+        # merge tvshows_lastplayed into tvshows excluding titles already listed
+        all_titles = [item["title"] for item in tvshows]
+        for item in tvshows_lastplayed:
+            if item["title"] not in all_titles:
+                tvshows.append(item)
+        # sortdate is higher of dateadded, lastplayed
+        for item in tvshows:
+            item['sortdate'] = item['dateadded'] if item['dateadded'] > item['lastplayed'] else item['lastplayed']
+        # sort by sortdate
+        tvshows = sorted(tvshows, key=itemgetter("sortdate"), reverse=True)[:self.options["limit"]]
         return self.metadatautils.process_method_on_list(self.process_tvshow, tvshows)
 
     def random(self):
