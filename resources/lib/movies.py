@@ -203,7 +203,7 @@ class Movies(object):
         ''' get recommended AND in progress movies '''
         all_items = self.inprogress()
         all_titles = [item["title"] for item in all_items]
-        for item in self.recommended():
+        for item in self.recent():
             if item["title"] not in all_titles:
                 all_items.append(item)
         return all_items[:self.options["limit"]]
